@@ -7,7 +7,7 @@
     "start": {
       "name": "start",
       "command": "python main.py",
-      "runAtStart": true,
+      "runAtStart": false,
       "restartOn": {
         "files": ["main.py"]
       }
