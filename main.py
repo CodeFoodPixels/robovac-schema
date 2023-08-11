@@ -5,6 +5,7 @@ from getpass import getpass
 
 CONF_CLIENT_ID = "CONF_CLIENT_ID"
 CONF_PHONE_CODE = "CONF_PHONE_CODE"
+CONF_TIMEZONE = "CONF_TIMEZONE"
 CONF_ID = "CONF_ID"
 CONF_MODEL = "CONF_MODEL"
 CONF_NAME = "CONF_NAME"
@@ -36,8 +37,7 @@ def get_eufy_vacuums(self):
   user_response = response.json()
   if user_response["res_code"] != 1:
     raise InvalidAuth
-  print("    t9147_sdk_flag: {}".format(
-    user_response["user_info"]["t9147_sdk_flag"]))
+
   print("    Success")
   print("Getting Eufy device info")
   response = eufy_session.get_device_info(
@@ -48,8 +48,17 @@ def get_eufy_vacuums(self):
   device_response = response.json()
   print("    Success")
 
+  response = eufy_session.get_user_settings(
+    user_response["user_info"]["request_host"],
+    user_response["user_info"]["id"],
+    user_response["access_token"],
+  )
+  settings_response = response.json()
+
   self[CONF_CLIENT_ID] = user_response["user_info"]["id"]
-  self[CONF_PHONE_CODE] = user_response["user_info"]["phone_code"]
+  self[CONF_PHONE_CODE] = settings_response["setting"]["home_setting"]["tuya_home"]["tuya_region_code"]
+  self[CONF_TIMEZONE] = user_response["user_info"]["timezone"]
+
 
   # self[CONF_VACS] = {}
   items = device_response["items"]
@@ -68,7 +77,8 @@ def get_eufy_vacuums(self):
   self[CONF_VACS] = allvacs
 
   tuya_client = TuyaAPISession(username="eh-" + self[CONF_CLIENT_ID],
-                               country_code=self[CONF_PHONE_CODE])
+                               country_code=self[CONF_PHONE_CODE],
+                               timezone=self[CONF_TIMEZONE])
   for home in tuya_client.list_homes():
     for device in tuya_client.list_devices(home["groupId"]):
       self[CONF_VACS][device["devId"]][CONF_ACCESS_TOKEN] = device["localKey"]
@@ -82,4 +92,5 @@ username = input("Anker/Eufy Username: ")
 password = getpass()
 
 get_eufy_vacuums({"username": username, "password": password})
+
 print("Test script ran successfully")
