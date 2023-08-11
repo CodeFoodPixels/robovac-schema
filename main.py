@@ -3,6 +3,8 @@ from eufywebapi import EufyLogon
 
 from getpass import getpass
 
+import json
+
 CONF_CLIENT_ID = "CONF_CLIENT_ID"
 CONF_PHONE_CODE = "CONF_PHONE_CODE"
 CONF_TIMEZONE = "CONF_TIMEZONE"
@@ -58,6 +60,21 @@ def get_eufy_vacuums(self):
   self[CONF_CLIENT_ID] = user_response["user_info"]["id"]
   self[CONF_PHONE_CODE] = settings_response["setting"]["home_setting"]["tuya_home"]["tuya_region_code"]
   self[CONF_TIMEZONE] = user_response["user_info"]["timezone"]
+
+  debug_user_response = user_response["user_info"].copy()
+  debug_user_response["id"] = "REDACTED"
+  debug_user_response["nick_name"] = "REDACTED"
+  debug_user_response["email"] = "REDACTED"
+  debug_user_response["mobile"] = "REDACTED"
+
+  print("user response")
+  print(json.dumps(debug_user_response, indent=4))
+  debug_settings_response = settings_response["setting"].copy()
+  debug_settings_response["user_id"] = "REDACTED"
+  debug_settings_response["home_setting"]["tuya_home"]["tuya_home_id"] = "REDACTED"
+
+  print("settings response")
+  print(json.dumps(debug_settings_response, indent=4))
 
 
   # self[CONF_VACS] = {}
