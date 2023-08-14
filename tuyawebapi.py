@@ -225,7 +225,7 @@ class TuyaAPISession:
             error_password = md5("12345678".encode("utf8")).hexdigest()
 
             if password != error_password:
-                session_response = self.request_session(
+                return self.request_session(
                     username, error_password, country_code
                 )
             else:
