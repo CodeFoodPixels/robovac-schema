@@ -31,7 +31,7 @@ class EufyLogon:
         }
 
         return requests.post(
-            login_url, json=login_auth, headers=eufyheaders, timeout=1.5
+            login_url, json=login_auth, headers=eufyheaders, timeout=5
         )
 
     def get_user_settings(self, url, userid, token):

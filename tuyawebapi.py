@@ -194,8 +194,7 @@ class TuyaAPISession:
         encrypted_uid += encryptor.finalize()
         return md5(encrypted_uid.hex().upper().encode("utf-8")).hexdigest()
 
-    def request_session(self, username, country_code):
-        password = self.determine_password(username)
+    def request_session(self, username, password, country_code):
         print("    Requesting token")
         token_response = self.request_token(username, country_code)
         print("        Success")
@@ -213,18 +212,37 @@ class TuyaAPISession:
             "options": '{"group": 1}',
             "token": token_response["token"],
         }
-        session_response = self._request(
-            action="tuya.m.user.uid.password.login.reg",
-            data=data,
-            _requires_session=False,
-        )
-        return session_response
+
+        try:
+            session_response = self._request(
+                action="tuya.m.user.uid.password.login.reg",
+                data=data,
+                _requires_session=False,
+            )
+
+            return session_response
+        except Exception as e:
+            error_password = md5("12345678".encode("utf8")).hexdigest()
+
+            if password != error_password:
+                session_response = self.request_session(
+                    username, error_password, country_code
+                )
+            else:
+                raise e
 
     def acquire_session(self):
-        session_response = self.request_session(self.username, self.country_code)
+        password = self.determine_password(self.username)
+        session_response = self.request_session(
+            self.username, password, self.country_code
+        )
         self.session_id = self.default_query_params["sid"] = session_response["sid"]
         self.base_url = session_response["domain"]["mobileApiUrl"]
-        self.country_code = session_response["phoneCode"] if session_response["phoneCode"] else self.getCountryCode(session_response["domain"]["regionCode"])
+        self.country_code = (
+            session_response["phoneCode"]
+            if session_response["phoneCode"]
+            else self.getCountryCode(session_response["domain"]["regionCode"])
+        )
 
     def list_homes(self):
         return self._request(action="tuya.m.location.list", version="2.1")
@@ -237,4 +255,4 @@ class TuyaAPISession:
         )
 
     def getCountryCode(self, region_code):
-      return {"EU": "44", "AY": "86"}.get(region_code, "1")
+        return {"EU": "44", "AY": "86"}.get(region_code, "1")
