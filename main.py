@@ -61,29 +61,35 @@ def get_eufy_vacuums(self):
   self[CONF_PHONE_CODE] = settings_response["setting"]["home_setting"]["tuya_home"]["tuya_region_code"]
   self[CONF_TIMEZONE] = user_response["user_info"]["timezone"]
 
-  # self[CONF_VACS] = {}
-  items = device_response["items"]
-  allvacs = {}
-  for item in items:
-    if item["device"]["product"]["appliance"] == "Cleaning":
-      vac_details = {
-        CONF_ID: item["device"]["id"],
-        CONF_MODEL: item["device"]["product"]["product_code"],
-        CONF_NAME: item["device"]["alias_name"],
-        CONF_DESCRIPTION: item["device"]["name"],
-        CONF_MAC: item["device"]["wifi"]["mac"],
-        CONF_IP_ADDRESS: "",
-      }
-      allvacs[item["device"]["id"]] = vac_details
-  self[CONF_VACS] = allvacs
-
   tuya_client = TuyaAPISession(username="eh-" + self[CONF_CLIENT_ID],
                                country_code=self[CONF_PHONE_CODE],
                                timezone=self[CONF_TIMEZONE])
-  for home in tuya_client.list_homes():
-    for device in tuya_client.list_devices(home["groupId"]):
-      self[CONF_VACS][device["devId"]][CONF_ACCESS_TOKEN] = device["localKey"]
-      self[CONF_VACS][device["devId"]][CONF_LOCATION] = home["groupId"]
+
+  items = device_response["items"]
+  print("Devices")
+  for item in items:
+    if item["device"]["product"]["appliance"] == "Cleaning":
+      print("    Cleaning device: {} ({})".format(item["device"]["alias_name"], item["device"]["id"]))
+      try:
+        device = tuya_client.get_device(item["device"]["id"])
+        print("        Found device in tuya")
+        if device["localKey"]:
+          print("        Device has local key!")
+        else:
+          print("        Device doesn't have local key!")
+
+      except:
+        print("        Could not find device on tuya")
+    else:
+      print("    Non-cleaning device: {} ({})".format(item["device"]["alias_name"], item["device"]["id"]))
+
+
+  print("Getting Tuya devices")
+  # for home in tuya_client.list_homes():
+  #   print("    {} ({}) devices:".format(home["name"], home["groupId"]))
+  #   for device in tuya_client.list_devices(home["groupId"]):
+  #     print(device)
+  #     # print("        {} ({})".format(device["name"], device["devId"]))
 
   return response
 

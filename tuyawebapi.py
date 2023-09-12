@@ -101,12 +101,6 @@ class TuyaAPISession:
             "AY": "https://a1.tuyacn.com",
         }.get(country_code, "https://a1.tuyaus.com")
 
-        print("Starting Tuya calls")
-        print("    Base URL: {}".format(self.base_url))
-        print("    Timezone: {}".format(timezone))
-        print("    Country code: {}".format(self.country_code))
-        print("    Region code: {}".format(country_code))
-
     @staticmethod
     def generate_new_device_id():
         expected_length = 44
@@ -145,11 +139,7 @@ class TuyaAPISession:
         _requires_session=True,
     ):
         if not self.session_id and _requires_session:
-            print("Getting TUYA session")
             self.acquire_session()
-            print("    Base URL: {}".format(self.base_url))
-            print("    Country code: {}".format(self.country_code))
-            print("    Success")
 
         current_time = time.time()
         request_id = uuid.uuid4()
@@ -195,9 +185,7 @@ class TuyaAPISession:
         return md5(encrypted_uid.hex().upper().encode("utf-8")).hexdigest()
 
     def request_session(self, username, password, country_code):
-        print("    Requesting token")
         token_response = self.request_token(username, country_code)
-        print("        Success")
         encrypted_password = unpadded_rsa(
             key_exponent=int(token_response["exponent"]),
             key_n=int(token_response["publicKey"]),
@@ -252,6 +240,13 @@ class TuyaAPISession:
             action="tuya.m.my.group.device.list",
             version="1.0",
             query_params={"gid": home_id},
+        )
+
+    def get_device(self, devId):
+        return self._request(
+            action="tuya.m.device.get",
+            version="1.0",
+            data={"devId": devId}
         )
 
     def getCountryCode(self, region_code):
