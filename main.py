@@ -73,23 +73,12 @@ def get_eufy_vacuums(self):
       try:
         device = tuya_client.get_device(item["device"]["id"])
         print("        Found device in tuya")
-        if device["localKey"]:
-          print("        Device has local key!")
-        else:
-          print("        Device doesn't have local key!")
-
+        print("            {}".format(device["name"]))
+        print("            {}".format(device["schema"]))
       except:
         print("        Could not find device on tuya")
     else:
       print("    Non-cleaning device: {} ({})".format(item["device"]["alias_name"], item["device"]["id"]))
-
-
-  print("Getting Tuya devices")
-  # for home in tuya_client.list_homes():
-  #   print("    {} ({}) devices:".format(home["name"], home["groupId"]))
-  #   for device in tuya_client.list_devices(home["groupId"]):
-  #     print(device)
-  #     # print("        {} ({})".format(device["name"], device["devId"]))
 
   return response
 
