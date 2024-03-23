@@ -13,6 +13,8 @@ from cryptography.hazmat.backends.openssl import backend as openssl_backend
 from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 import requests
 
+TUYA_INITIAL_BASE_URL = "https://a1.tuyaeu.com"
+
 EUFY_HMAC_KEY = (
     "A_cepev5pfnhua4dkqkdpmnrdxx378mpjr_s8x78u7xwymasd9kqa7a73pjhxqsedaj".encode()
 )
@@ -88,18 +90,21 @@ class TuyaAPISession:
     country_code = None
     session_id = None
 
-    def __init__(self, username, country_code, timezone):
+    def __init__(self, username, region, timezone, phone_code):
         self.session = requests.session()
         self.session.headers = DEFAULT_TUYA_HEADERS.copy()
         self.default_query_params = DEFAULT_TUYA_QUERY_PARAMS.copy()
         self.default_query_params["deviceId"] = self.generate_new_device_id()
         self.username = username
-        self.country_code = self.getCountryCode(country_code)
-        DEFAULT_TUYA_QUERY_PARAMS["timeZoneId"] = timezone
+        self.country_code = phone_code
         self.base_url = {
-            "EU": "https://a1.tuyaeu.com",
+            "AZ": "https://a1.tuyaus.com",
             "AY": "https://a1.tuyacn.com",
-        }.get(country_code, "https://a1.tuyaus.com")
+            "IN": "https://a1.tuyain.com",
+            "EU": "https://a1.tuyaeu.com",
+        }.get(region, "https://a1.tuyaeu.com")
+
+        DEFAULT_TUYA_QUERY_PARAMS["timeZoneId"] = timezone
 
     @staticmethod
     def generate_new_device_id():
@@ -202,20 +207,16 @@ class TuyaAPISession:
         }
 
         try:
-            session_response = self._request(
+            return self._request(
                 action="tuya.m.user.uid.password.login.reg",
                 data=data,
                 _requires_session=False,
             )
-
-            return session_response
         except Exception as e:
             error_password = md5("12345678".encode("utf8")).hexdigest()
 
             if password != error_password:
-                return self.request_session(
-                    username, error_password, country_code
-                )
+                return self.request_session(username, error_password, country_code)
             else:
                 raise e
 
@@ -235,19 +236,7 @@ class TuyaAPISession:
     def list_homes(self):
         return self._request(action="tuya.m.location.list", version="2.1")
 
-    def list_devices(self, home_id: str):
-        return self._request(
-            action="tuya.m.my.group.device.list",
-            version="1.0",
-            query_params={"gid": home_id},
-        )
-
     def get_device(self, devId):
         return self._request(
-            action="tuya.m.device.get",
-            version="1.0",
-            data={"devId": devId}
+            action="tuya.m.device.get", version="1.0", data={"devId": devId}
         )
-
-    def getCountryCode(self, region_code):
-        return {"EU": "44", "AY": "86"}.get(region_code, "1")
