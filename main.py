@@ -1,3 +1,7 @@
+import urllib.parse
+import requests
+from py_spoo_url import Shortener
+
 from countries import (
     get_phone_code_by_country_code,
     get_phone_code_by_region,
@@ -106,34 +110,81 @@ def get_eufy_vacuums(self):
     self[CONF_VACS] = {}
     for item in items:
         if item["device"]["product"]["appliance"] == "Cleaning":
-            try:
-                device = tuya_client.get_device(item["device"]["id"])
+            device = tuya_client.get_device(item["device"]["id"])
 
-                vac_details = {
-                    CONF_ID: item["device"]["id"],
-                    CONF_MODEL: item["device"]["product"]["product_code"],
-                    CONF_NAME: item["device"]["alias_name"],
-                    CONF_DESCRIPTION: item["device"]["name"],
-                    CONF_MAC: item["device"]["wifi"]["mac"],
-                    CONF_IP_ADDRESS: "",
-                    CONF_AUTODISCOVERY: True,
-                    CONF_ACCESS_TOKEN: device["localKey"],
-                }
-                self[CONF_VACS][item["device"]["id"]] = vac_details
+            vac_details = {
+                CONF_ID: item["device"]["id"],
+                CONF_MODEL: item["device"]["product"]["product_code"],
+                CONF_NAME: item["device"]["alias_name"],
+                CONF_DESCRIPTION: item["device"]["name"],
+                CONF_MAC: item["device"]["wifi"]["mac"],
+                CONF_IP_ADDRESS: "",
+                CONF_AUTODISCOVERY: True,
+                CONF_ACCESS_TOKEN: device["localKey"],
+            }
+            self[CONF_VACS][item["device"]["id"]] = vac_details
 
-                print("")
-                print("Schema for {}:".format(vac_details[CONF_MODEL]))
-                print(json.dumps(json.loads(device["schema"]), indent=2))
-                print("")
-            except:
-                return
+            model = vac_details[CONF_MODEL]
+
+            schema = json.dumps(
+                json.loads(device["schema"]), indent=2, ensure_ascii=False
+            ).replace("\n", "\r\n")
+
+            markdown = "```json\r\nyarr\r\n" + schema + "\r\n```"
+
+            issues = requests.get(
+                "https://api.github.com/repos/CodeFoodPixels/robovac-schema/issues?state=all&sort=created&direction=asc"
+            ).json()
+
+            found = False
+            exact = False
+            matched_issue = 0
+            for issue in issues:
+                if issue["title"] == model:
+                    matched_issue = issue["html_url"]
+                    if issue["body"] == markdown:
+                        exact = True
+                    else:
+                        comments = requests.get(issue["comments_url"]).json()
+                        for comment in comments:
+                            if comment["body"] == markdown:
+                                exact = True
+                                break
+                    found = True
+                    break
+
+            print("")
+            print("Schema for {}:".format(model))
+            print(markdown)
+            print("")
+            if found and exact:
+                print("This schema has already been submitted!")
+            elif found:
+                print(
+                    "A schema for this vacuum has been submitted, but does not match this one."
+                )
+                print("Please add your schema as a comment to this issue:")
+                print(matched_issue)
+            else:
+                short_url = Shortener().shorten(
+                    "https://github.com/codefoodpixels/robovac-schema/issues/new?title={}&body={}".format(
+                        model, urllib.parse.quote_plus(markdown)
+                    )
+                )
+
+                print("Submit this using the following link:")
+                print(short_url)
+            print("")
 
     return response
 
 
 print("********** Robovac Schema Grabber **********")
 
-username = input("Anker/Eufy Username: ")
-password = getpass()
+# username = input("Anker/Eufy Username: ")
+# password = getpass()
+
+username = "speedysurfer2205@gmail.com"
+password = "55HjL2Ye3OQZzg@G89V3"
 
 get_eufy_vacuums({"username": username, "password": password})
