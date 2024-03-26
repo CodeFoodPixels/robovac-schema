@@ -1,3 +1,4 @@
+import sys
 import urllib.parse
 import requests
 from py_spoo_url import Shortener
@@ -181,10 +182,11 @@ def get_eufy_vacuums(self):
 
 print("********** Robovac Schema Grabber **********")
 
-# username = input("Anker/Eufy Username: ")
-# password = getpass()
-
-username = "speedysurfer2205@gmail.com"
-password = "55HjL2Ye3OQZzg@G89V3"
+if len(sys.argv) == 3:
+    username = sys.argv[1]
+    password = sys.argv[2]
+else:
+    username = input("Anker/Eufy Username: ")
+    password = getpass()
 
 get_eufy_vacuums({"username": username, "password": password})
