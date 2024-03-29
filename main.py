@@ -107,23 +107,23 @@ def get_eufy_vacuums(self):
         phone_code=self[CONF_COUNTRY_CODE],
     )
 
-    items = device_response["items"]
+    items = device_response["devices"]
     self[CONF_VACS] = {}
     for item in items:
-        if item["device"]["product"]["appliance"] == "Cleaning":
-            device = tuya_client.get_device(item["device"]["id"])
+        if item["product"]["appliance"] == "Cleaning":
+            device = tuya_client.get_device(item["id"])
 
             vac_details = {
-                CONF_ID: item["device"]["id"],
-                CONF_MODEL: item["device"]["product"]["product_code"],
-                CONF_NAME: item["device"]["alias_name"],
-                CONF_DESCRIPTION: item["device"]["name"],
-                CONF_MAC: item["device"]["wifi"]["mac"],
+                CONF_ID: item["id"],
+                CONF_MODEL: item["product"]["product_code"],
+                CONF_NAME: item["alias_name"],
+                CONF_DESCRIPTION: item["name"],
+                CONF_MAC: item["wifi"]["mac"],
                 CONF_IP_ADDRESS: "",
                 CONF_AUTODISCOVERY: True,
                 CONF_ACCESS_TOKEN: device["localKey"],
             }
-            self[CONF_VACS][item["device"]["id"]] = vac_details
+            self[CONF_VACS][item["id"]] = vac_details
 
             model = vac_details[CONF_MODEL]
 
@@ -131,7 +131,7 @@ def get_eufy_vacuums(self):
                 json.loads(device["schema"]), indent=2, ensure_ascii=False
             ).replace("\n", "\r\n")
 
-            markdown = "```json\r\nyarr\r\n" + schema + "\r\n```"
+            markdown = "```json\r\n" + schema + "\r\n```"
 
             issues = requests.get(
                 "https://api.github.com/repos/CodeFoodPixels/robovac-schema/issues?state=all&sort=created&direction=asc"
@@ -182,7 +182,7 @@ def get_eufy_vacuums(self):
 
 print("********** Robovac Schema Grabber **********")
 
-if len(sys.argv) == 3:
+if sys.argv[1] and sys.argv[2]:
     username = sys.argv[1]
     password = sys.argv[2]
 else:
